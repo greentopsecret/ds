@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy import genfromtxt
 import argparse
-
-SOURCE_FILE = './datapoints.csv'
+import sys
 
 def calculate_y(slope, intercept, x):
     return slope * x + intercept
@@ -14,6 +13,7 @@ def calculate_mse(data, slope, intercept):
     mse = 0
     for point in data:
         mse += (calculate_y(slope, intercept, point[0]) - point[1]) ** 2
+
     if args.verbose:
         print('slope: %.2f; intercept: %.2f; mse: %.2f' % (slope, intercept, mse))
     return mse
@@ -22,6 +22,7 @@ def get_args():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
+    parser.add_argument('--source', help='Source file', default='./datapoints.csv')
     parser.add_argument('--verbose', help='Print debug info', action=argparse.BooleanOptionalAction)
     parser.add_argument('--plot', help='Open plot', action=argparse.BooleanOptionalAction)
     args = parser.parse_args()
@@ -29,7 +30,12 @@ def get_args():
 
 args = get_args()
 
-data = genfromtxt(SOURCE_FILE, delimiter=',', skip_header=1)
+try:
+    data = genfromtxt(args.source, delimiter=',', skip_header=1)
+except:
+    print('Cannot read data from the file "%s"' % args.source)
+    sys.exit(1)
+
 x = data[:,0]
 y = data[:,1]
 
@@ -39,13 +45,20 @@ slope = None
 intercept = None
 while s > 0:
     i = min(y)
+    previous_candidate_mse = None
     while i < max(y):
         candidate_mse = calculate_mse(data, s, i)
+
+        # Optimisation: we don't need to continue if mse is growing
+        if (previous_candidate_mse is not None and previous_candidate_mse < candidate_mse):
+            break
+
         if smallest_mse is None or smallest_mse > candidate_mse:
             smallest_mse = candidate_mse
             slope = s
             intercept = i
         i += 0.1
+        previous_candidate_mse = candidate_mse
     s -= 0.1
 
 print('Smallest MSE: %.2f' % smallest_mse)
