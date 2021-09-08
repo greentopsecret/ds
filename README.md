@@ -16,11 +16,6 @@ Run with debug info
 ./mse.py --verbose
 ```
 
-Run and draw a plot
-```
-./mse.py --plot
-```
-
 ## Optimisation
 There are two loops - outer that iterates through possible slope values and inner that iterates through possible intercept values.   
 Inside the inner loop we can break once we noticed that MSE started to grow (that optimisation is already implemented).  

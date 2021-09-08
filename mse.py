@@ -24,7 +24,6 @@ def get_args():
     )
     parser.add_argument('--source', help='Source file', default='./datapoints.csv')
     parser.add_argument('--verbose', help='Print debug info', action=argparse.BooleanOptionalAction)
-    parser.add_argument('--plot', help='Open plot', action=argparse.BooleanOptionalAction)
     args = parser.parse_args()
     return args
 
@@ -39,15 +38,15 @@ except:
 x = data[:,0]
 y = data[:,1]
 
-s = 10
+slope = 10
 smallest_mse = None
-slope = None
-intercept = None
-while s > 0:
-    i = min(y)
+closest_slope = None
+closest_intercept = None
+while slope > 0:
+    intercept = max(y)
     previous_candidate_mse = None
-    while i < max(y):
-        candidate_mse = calculate_mse(data, s, i)
+    while intercept > min(y):
+        candidate_mse = calculate_mse(data, slope, intercept)
 
         # Optimisation: we don't need to continue if mse is growing
         if (previous_candidate_mse is not None and previous_candidate_mse < candidate_mse):
@@ -55,21 +54,20 @@ while s > 0:
 
         if smallest_mse is None or smallest_mse > candidate_mse:
             smallest_mse = candidate_mse
-            slope = s
-            intercept = i
-        i += 0.1
+            closest_slope = slope
+            closest_intercept = intercept
+        intercept -= 0.1
         previous_candidate_mse = candidate_mse
-    s -= 0.1
+    slope -= 0.1
+
+plt.scatter(x, y)
+plt.plot(
+    [min(x), max(x)],
+    [calculate_y(slope, closest_intercept, min(x)), calculate_y(closest_slope, closest_intercept, max(x))],
+    color='gray'
+)
+plt.show()
 
 print('Smallest MSE: %.2f' % smallest_mse)
-print('A (Closest slope): %.2f' % slope)
-print('B (Closest intercept): %.2f' % intercept)
-
-if args.plot:
-    plt.scatter(x, y)
-    plt.plot(
-        [min(x), max(x)], 
-        [calculate_y(slope, intercept, min(x)), calculate_y(slope, intercept, max(x))], 
-        color='gray'
-    )
-    plt.show()
+print('A (Closest slope): %.2f' % closest_slope)
+print('B (Closest intercept): %.2f' % closest_intercept)
